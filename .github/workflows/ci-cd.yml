@@ -39,13 +39,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy App Tier with SSH (Debug Enabled)
+      - name: Deploy App Tier with SSH (Docker installation included)
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            echo "Installing Docker if not already installed..."
+            sudo apt-get update
+            sudo apt-get install -y docker.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
+
             echo "Pulling Docker images for App Tier..."
             docker pull ${{ secrets.DOCKER_USERNAME }}/apptier:latest
 
