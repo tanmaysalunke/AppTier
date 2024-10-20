@@ -1,7 +1,6 @@
 import boto3
 import json
 import base64
-import io
 import os
 import tempfile
 import subprocess
