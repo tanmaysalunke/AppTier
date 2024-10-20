@@ -17,12 +17,18 @@ response_queue_url = f'https://sqs.us-west-2.amazonaws.com/442042549532/{ASU_ID}
 s3 = boto3.client('s3')
 
 def upload_image_to_s3(bucket_name, file_name, image_data):
+    # Ensure the file name has the correct extension
+    if not file_name.endswith('.jpg'):
+        file_name += '.jpg'
+        
     decoded_image = base64.b64decode(image_data)
-    s3.put_object(Bucket=bucket_name, Key=file_name, Body=decoded_image)
+    s3.put_object(Bucket=bucket_name, Key=file_name, Body=decoded_image, ContentType='image/jpeg')
     print(f"Uploaded {file_name} to S3 input bucket {bucket_name}")
+
 
 def upload_classification_to_s3(bucket_name, file_name, classification_result):
     s3.put_object(Bucket=bucket_name, Key=file_name, Body=classification_result)
+    print(f"Uploaded {file_name} to S3 output bucket {bucket_name}")
 
 def process_image(image_data):
     with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
@@ -50,11 +56,12 @@ def poll_sqs():
 
                 print(f"Processing image: {file_name}")
                 person_name = process_image(file_content)
-
-                upload_classification_to_s3(output_bucket_name, file_name.split('.')[0], person_name)
-                sqs.send_message(QueueUrl=response_queue_url, MessageBody=json.dumps({'fileName': file_name, 'classificationResult': person_name}))
-                sqs.delete_message(QueueUrl=request_queue_url, ReceiptHandle=receipt_handle)
-                print(f"Processed {file_name}: {person_name}")
+                if person_name:
+                    upload_image_to_s3(input_bucket_name, file_name, file_content)
+                    upload_classification_to_s3(output_bucket_name, file_name.split('.')[0], person_name)
+                    sqs.send_message(QueueUrl=response_queue_url, MessageBody=json.dumps({'fileName': file_name, 'classificationResult': person_name}))
+                    sqs.delete_message(QueueUrl=request_queue_url, ReceiptHandle=receipt_handle)
+                    print(f"Processed {file_name}: {person_name}")
         else:
             print("No messages in the queue. Waiting...")
             time.sleep(5)
