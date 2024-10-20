@@ -52,6 +52,10 @@ jobs:
             sudo systemctl start docker
             sudo systemctl enable docker
 
+            echo "Adding current user to the Docker group..."
+            sudo usermod -aG docker $USER
+            newgrp docker
+
             echo "Pulling Docker images for App Tier..."
             docker pull ${{ secrets.DOCKER_USERNAME }}/apptier:latest
 
