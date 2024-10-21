@@ -13,7 +13,11 @@ WORKDIR /app
 COPY . /app
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install boto3 requests
+
+# Install PyTorch, TorchVision, and Torchaudio for CPU
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu 
 
 # Expose port 5000 (if necessary for the app to communicate)
 EXPOSE 5000
