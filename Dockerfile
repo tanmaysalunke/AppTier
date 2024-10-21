@@ -23,4 +23,4 @@ RUN pip install torch torchvision torchaudio --index-url https://download.pytorc
 EXPOSE 5000
 
 # Run the app when the container launches
-CMD ["python", "app_tier.py"]
+CMD ["python", "-u", "app_tier.py"]
