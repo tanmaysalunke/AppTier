@@ -55,16 +55,13 @@ def poll_sqs():
 
                 print(f"Processing image: {file_name}")
                 person_name = process_image(file_content)
-                if person_name:
-                    upload_image_to_s3(input_bucket_name, file_name, file_content)
-                    upload_classification_to_s3(output_bucket_name, file_name.split('.')[0], person_name)
-                    sqs.send_message(QueueUrl=response_queue_url, MessageBody=json.dumps({'fileName': file_name, 'classificationResult': person_name}))
-                    print(f"Sent message to response queue: {{'fileName': '{file_name}', 'classificationResult': '{person_name}'}}")
-                    sqs.delete_message(QueueUrl=request_queue_url, ReceiptHandle=receipt_handle)
-                    print(f"Processed {file_name}: {person_name}")
-        else:
-            print("No messages in the queue. Waiting...")
-            time.sleep(5)
+                sqs.send_message(QueueUrl=response_queue_url, MessageBody=json.dumps({'fileName': file_name, 'classificationResult': person_name}))
+                sqs.delete_message(QueueUrl=request_queue_url, ReceiptHandle=receipt_handle)
+                upload_image_to_s3(input_bucket_name, file_name, file_content)
+                upload_classification_to_s3(output_bucket_name, file_name.split('.')[0], person_name)
+                print(f"Sent message to response queue: {{'fileName': '{file_name}', 'classificationResult': '{person_name}'}}")
+                
+                print(f"Processed {file_name}: {person_name}")
 
 if __name__ == "__main__":
     print("Starting the App Tier instance...")
